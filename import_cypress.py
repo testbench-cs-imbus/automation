@@ -216,8 +216,9 @@ try:
                                 tbcs.add_test_step(pid, tcid, ts.Name, blockid, "TestStep")
                         continue
                     logger.debug(f'Importing Test Case "{tc.Name}" with externalID "{tc.ExternalId}" ...')
-                    tcJson = {"userStoryId": uid, "name": tc.Name, "testCaseType": "StructuredTestCase"}
+                    tcJson = {"userStoryId": uid, "name": tc.Name, "testCaseType": "StructuredTestCase", "customTestSequenceTitles": []}
                     tcid = tbcs.post_test_case(pid, tcJson)
+
                     tcPatchJson = {
                         "description": {
                             "text": tc.Description

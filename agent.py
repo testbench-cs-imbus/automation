@@ -325,7 +325,7 @@ if __name__ == "__main__":
                     logger.debug("Check Test Session: " + str(test_session['testSessionId']) + " " +
                                  test_session['name'])
 
-                    # Check if user is responsible for the Test Suite
+                    # Check if user is responsible for the Test Session
                     is_participant = False
                     for participant in test_session['participants']:
                         if str(participant['userId']) == tbcs.user_id:

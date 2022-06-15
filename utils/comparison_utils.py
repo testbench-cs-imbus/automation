@@ -53,10 +53,11 @@ def is_equal_parameterized(string_par: str, string_val: str) -> bool:
     - True => if both strings are equal
     - False => if the strings are not equal
     """
+    string_par = re.sub('\\.', "\\.",
+                        string_par)  # replace single dots which would be read as wildcard with a escaped dot
+    pattern = re.sub('\$\{.*\}', '(.*)', string_par)  # type: ignore
 
-    pattern = re.sub('\$\{.*\}', '(.*)', string_par) # type: ignore
-
-    if re.match(pattern, string_val):
+    if re.fullmatch(pattern, string_val):
         return True
 
     return False

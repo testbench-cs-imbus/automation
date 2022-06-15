@@ -436,7 +436,9 @@ def get_or_create_kwd(logger: Logger,
     - par_list => List of the parameters containing dictionaries (keys: id, name, description)
     - {} => if the signature of the keyword is wrong
     """
-    keyword_list = tbcs.get_keyword_list(product_id)
+    if tbcs.keyword_list == {}:
+        tbcs.keyword_list = tbcs.get_keyword_list(product_id)
+    keyword_list = tbcs.keyword_list
 
     name = new_keyword['name']
     description = new_keyword['description']
@@ -455,6 +457,14 @@ def get_or_create_kwd(logger: Logger,
         # check for identical name, identity of name with original text, or if the keyword name is parameterized
         if keyword['name'].upper() == name.upper() or comparison_utils.is_equal_ignore_separators(
                 keyword['originalText'], name) or comparison_utils.is_equal_parameterized(keyword['name'], name):
+
+            if keyword['name'].upper() == name.upper():
+                logger.debug("name equal")
+            if comparison_utils.is_equal_ignore_separators(keyword['originalText'], name):
+                logger.debug("name equal original text")
+            if comparison_utils.is_equal_parameterized(keyword['name'], name):
+                logger.debug(f"name equal ignoring pars: {keyword['name']} - {name}")
+
             # check for identical signature:
             found = 0
             for parNew in new_keyword['parlist']:
@@ -469,7 +479,8 @@ def get_or_create_kwd(logger: Logger,
             if found == len(new_keyword['parlist']) or signature_check == False:
                 for parameter in keyword['parameters']:
                     par_list.append(parameter)
-                return {'id': keyword['id'], 'par_list': par_list}
+                logger.debug(f"Found existing Keyword {keyword['name']} with id: {keyword['id']}")
+                return {'id': keyword['id'], 'par_list': par_list, 'action': 'reused'}
             else:
                 return {}
 
@@ -478,16 +489,16 @@ def get_or_create_kwd(logger: Logger,
 
     if len(new_keyword['parlist']) > 0:
         for arg in new_keyword['parlist']:
-            logger.debug(f"Adding parameter: {arg['name']}")
+            # logger.debug(f"Adding parameter: {arg['name']}")
 
             variables = {}
             variables['paramName'] = arg['name']
 
             par_id = tbcs.create_keyword_param(product_id, keyword_id, variables)
             par_list.append({'id': par_id, 'name': arg['name'], 'description': ""})
-            logger.debug(f"Successfully created Parameter with id: {par_id}")
+            # logger.debug(f"Successfully created Parameter with id: {par_id}")
 
-    return {'id': keyword_id, 'par_list': par_list}
+    return {'id': keyword_id, 'par_list': par_list, 'action': 'created'}
 
 
 def get_test_step_block(logger: Logger, tbcs: TbcsApi, test_case_item: dict, block_name: str) -> Union[dict, None]:
@@ -645,3 +656,36 @@ def get_files(logger: Logger, source: List[str], file_extension="") -> List[str]
         logger.error(f'{s} is neither a file nor folder')
         continue
     return results
+
+
+def get_sections(logger: Logger, tbcs: TbcsApi, product_id: str, tc_id: str) -> dict:
+    """
+    Retrieves sections (blocks) in a structured Test Case and returns a dictionary with the found sections and their IDs.
+
+    Parameters
+    ----------
+    logger: logging.Logger
+        Logger instance
+
+    tbcs: TbcsApi
+        TbcsApi instance
+
+    product_id: str
+        Id of the product
+
+    tc_id: str
+        Id of the Test Case
+
+    Returns
+    -------
+    dict:
+        A dictionary including the section ids for each section title
+    """
+    result_sections = {}
+
+    tc = tbcs.get_test_case(product_id, tc_id)
+
+    for section in tc['testSequence']['testStepBlocks']:
+        result_sections[section['title']] = section['id']
+
+    return result_sections

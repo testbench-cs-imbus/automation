@@ -7,12 +7,12 @@ export class TestBenchApi {
 
   constructor(private options: TestBenchOptions, apiSession: TestBenchApiSession = null) {
     if (apiSession != null) {
-      this.apiSession = apiSession
+      this.apiSession = apiSession;
     }
   }
 
   private apiUrl(): string {
-    if (Cypress.env('tbcsurl')) return Cypress.env('tbcsurl') + '/api'
+    if (Cypress.env('tbcsurl')) return Cypress.env('tbcsurl') + '/api';
     return this.options.serverUrl + '/api';
   }
 
@@ -185,6 +185,7 @@ export class TestBenchApi {
       data: {
         name: testCaseName,
         testCaseType: type,
+        customTestSequenceTitles: [],
       },
     })
       .then(response => {
@@ -284,7 +285,7 @@ export class TestBenchApi {
     })
       .then(response => {
         ReportLogger.debug(JSON.stringify(response));
-        return response.data;
+        return response.data.executionId;
       })
       .catch(error => ReportLogger.error(JSON.stringify(error)));
   }

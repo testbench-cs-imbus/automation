@@ -21,7 +21,7 @@ export interface TestBenchTestSessionExecutions {
 
 export interface TestBenchTestSessionExecution {
   testCaseIds: any;
-  executionId: number;
+  executionId: string;
 }
 
 export enum Result {

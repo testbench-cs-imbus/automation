@@ -224,14 +224,16 @@ if __name__ == "__main__":
                 logger.info(f"Test Case '{test_case_name}' doesn't exist")
                 test_case_id = tbcs.post_test_case(product_id, {
                     'name': test_case_name,
-                    'testCaseType': 'StructuredTestCase'
+                    'testCaseType': 'StructuredTestCase',
+                    "customTestSequenceTitles": []
                 })
+
+                test_block_setup = {'id': tbcs.add_test_step_block(product_id, test_case_id, "Setup")}
+                test_block_test_steps = {'id': tbcs.add_test_step_block(product_id, test_case_id, "Test Steps")}
+                test_block_teardown = {'id': tbcs.add_test_step_block(product_id, test_case_id, "Teardown")}
 
                 tbcs_test_case_item = tbcs.get_test_case(product_id, test_case_id)
 
-                test_block_setup = None
-                test_block_test_steps = None
-                test_block_teardown = None
             else:
                 logger.info(f"Test Case '{test_case_name}' already exists")
                 if len(tbcs_test_case) > 1:  # Found more than 1 Test Case

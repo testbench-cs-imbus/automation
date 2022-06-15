@@ -76,7 +76,7 @@ export class TestBenchAutomation {
       if (testCaseId !== undefined) {
         testCaseResponse = await this.tbcsApi.getTestCaseById(testCaseId);
         for (let block of testCaseResponse.testSequence.testStepBlocks) {
-          ReportLogger.debug('Scanning test step block: ' + block.title)
+          ReportLogger.debug('Scanning test step block: ' + block.title);
           if (block.title === 'Test Steps') {
             for (let step of block.steps) {
               testStepsCurrent.push({
@@ -100,14 +100,14 @@ export class TestBenchAutomation {
             await this.tbcsApi.deleteTestStepBlock(testCaseId, blockId);
           }
           // create test steps and remember id's
-          blockId = await this.tbcsApi.createTestStepBlock(testCaseId, "Test Steps");
+          blockId = await this.tbcsApi.createTestStepBlock(testCaseId, 'Test Steps');
           testStepsCurrent = [];
           for (let step of testCase.testSteps) {
-            let stepId = await this.tbcsApi.createTestStep(testCaseId, step, "TestStep", blockId);
+            let stepId = await this.tbcsApi.createTestStep(testCaseId, step, 'TestStep', blockId);
             testStepsCurrent.push({
               id: stepId,
               blockId: blockId,
-              type: "TestStep",
+              type: 'TestStep',
               name: step,
             });
           }
@@ -129,6 +129,7 @@ export class TestBenchAutomation {
         ReportLogger.info('Creating new test case.');
         // create it as a free structured test case
         testCaseId = await this.tbcsApi.createTestCase(testCase.name, 'StructuredTestCase');
+
         // update for automation
         let patchData = {
           description: { text: testCase.description ? testCase.description : null },
@@ -142,27 +143,28 @@ export class TestBenchAutomation {
         await this.tbcsApi.putPreconditionMarker(testCaseId, true);
 
         // test step block
-        blockId = await this.tbcsApi.createTestStepBlock(testCaseId, "Test");
+        blockId = await this.tbcsApi.createTestStepBlock(testCaseId, 'Test Steps');
         // test steps
         for (let step of testCase.testSteps) {
-          let stepId = await this.tbcsApi.createTestStep(testCaseId, step, "TestStep", blockId);
+          let stepId = await this.tbcsApi.createTestStep(testCaseId, step, 'TestStep', blockId);
           testStepsCurrent.push({
             id: stepId,
             blockId: blockId,
-            type: "TestStep",
+            type: 'TestStep',
             name: step,
           });
         }
       }
 
       // add execution
-      let executionId = "";
+      let executionId = '';
       if (Cypress.env('extid')) {
         executionId = Cypress.env('extid');
       } else {
         executionId = await this.tbcsApi.createTestCaseExecution(testCaseId);
       }
-      if (Cypress.env('sessiontoken')) { // triggered externally
+      if (Cypress.env('sessiontoken')) {
+        // triggered externally
         await this.tbcsApi.updateExecutionStatus(testCaseId, executionId, '"InProgress"');
       } else {
         await this.tbcsApi.updateTestSession(testCaseId, executionId, this.testSessionId);
@@ -205,7 +207,7 @@ export class TestBenchAutomation {
         tbcsSteps = block.steps;
       }
     }
-    if (tbcsSteps === undefined && cypressTestCase.testSteps.length > 0) return true
+    if (tbcsSteps === undefined && cypressTestCase.testSteps.length > 0) return true;
     if (tbcsSteps !== undefined && cypressTestCase.testSteps.length !== tbcsSteps.length) return true;
 
     var compareFailed = false;

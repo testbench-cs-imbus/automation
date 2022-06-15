@@ -86,11 +86,20 @@ for feature in obj:
         progress_bar.update_progress()
 
         description = scenario['name']
-        tcJson = {"name": description, "testCaseType": "StructuredTestCase", "userStoryId": usId}
+        tcJson = {
+            "name": description,
+            "testCaseType": "StructuredTestCase",
+            "userStoryId": usId,
+            "customTestSequenceTitles": ['Given', 'When', 'Then']
+        }
         test_case_id = tbcs.post_test_case(pid, tcJson)
-        givenId = tbcs.add_test_step_block(pid, test_case_id, "Given")
-        whenId = tbcs.add_test_step_block(pid, test_case_id, "When")
-        thenId = tbcs.add_test_step_block(pid, test_case_id, "Then")
+
+        step_List: dict = tbcs_utils.get_sections(logger, tbcs, pid, test_case_id)
+
+        givenId = step_List['Given']
+        whenId = step_List['When']
+        thenId = step_List['Then']
+
         count_created = count_created + 1
 
         tcJson = {}

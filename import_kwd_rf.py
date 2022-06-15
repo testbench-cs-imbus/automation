@@ -14,11 +14,16 @@ logger = logger_utils.get_logger('import Keywords from RF', config.LOGLEVEL)
 # Parse command line
 parser = argparse.ArgumentParser(description="Import Keywords from Robot Framework ressource file or library.")
 parser.add_argument('source', nargs=1, help='name of file or folder to be scanned')
+parser.add_argument('-x', '--praefix', nargs=1, help='praefix added to each Keyword name')
 plist = tbcs_utils.handle_default_args(config.ACCOUNT, parser)
 
 filename = plist.source[0]
 outFile = config.ROBOT_KDT['base_dir'] + \
     config.ROBOT_KDT['script_dir'].replace("\\", "/") + "/out.txt"
+
+praefix = ""
+if plist.praefix != None:  # each Keyword will get this praefix
+    praefix = plist.praefix[0] + "."
 
 call = ["libdoc", "-f", "json", filename, outFile]
 try:
@@ -48,10 +53,11 @@ if (pid == ""):
     exit()
 
 count = 0
+reuse_count = 0
+
 progress_bar = ProgressIndicator(len(obj["keywords"]), 'Importing', 'Keywords', 50)
 
 for keyword in obj["keywords"]:
-    count = count + 1
     progress_bar.update_progress()
 
     name = keyword["name"]
@@ -61,26 +67,33 @@ for keyword in obj["keywords"]:
     logger.debug("Creating Keyword: " + name)
 
     par_kwd = {}
-    par_kwd["name"] = name
+
+    par_kwd["name"] = praefix + name
     par_kwd["description"] = description[:3998]  # truncate to 3999 chars
     par_kwd["parlist"] = keyword["args"]
+    result = tbcs_utils.get_or_create_kwd(logger, tbcs, pid, par_kwd)
+    kwd_id = result['id']
 
-    kwd_id = tbcs_utils.get_or_create_kwd(logger, tbcs, pid, par_kwd)['id']
-
-    # after creation, update Keyword with those details we cannot provide while creating
-    par_kwd = {}
-    if type == "RESOURCE":
-        par_kwd["library"] = "resource:" + os.path.basename(lib)
+    if result['action'] == 'created':
+        # after creation, update Keyword with those details we cannot provide while creating
+        par_kwd = {}
+        if type == "RESOURCE":
+            par_kwd["library"] = "resource:" + os.path.basename(lib)
+        else:
+            par_kwd["library"] = "library:" + filename
+        par_kwd["isImplemented"] = True
+        tbcs.update_keyword(pid, kwd_id, par_kwd)
+        count = count + 1
     else:
-        par_kwd["library"] = "library:" + filename
-    par_kwd["isImplemented"] = True
-    tbcs.update_keyword(pid, kwd_id, par_kwd)
+        reuse_count = reuse_count + 1
 
     logger.debug("Creation/Match id: " + kwd_id)
 
 ProgressIndicator.clear_indicators()
 
 logger.info(f'Sucessfully imported {str(count)} Keywords.')
+if (reuse_count > 0):
+    logger.info(f'Found {str(reuse_count)} existing Keywords - not importing them.')
 
 if config.ROBOT_KDT["cleanup"]:
     os.remove(outFile)

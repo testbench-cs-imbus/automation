@@ -13,6 +13,8 @@ class TbcsApi:
     product_id: str = ""
     tenant_id: str = ""
 
+    keyword_list: dict = {}
+
     @staticmethod
     def setup(tbcs_base: str, workspace: str, login: str, password: str) -> 'TbcsApi':
         """
@@ -1277,6 +1279,51 @@ class TbcsApi:
         response = requests.post(route, json=test_block_data, headers=self.rest_header, verify=self.verify)
         assert response.status_code == 201, f"Add Test Step Block failed: {response.text}"
         return str(response.json()['testStepBlockId'])
+
+    def patch_test_step_block(self,
+                              product_id: str,
+                              test_case_id: str,
+                              test_step_block_id: str,
+                              title: str,
+                              position: int = -1):
+        """
+        Updates a Test Step Block in a Test Case.
+
+        Parameters
+        ----------
+        product_id: str
+            Id of the product
+
+        test_case_id: str
+            Id of the Test Case
+
+        test_step_block_id: str
+            Id of the Test Section/Block
+
+        title: str
+            Title of the Test Step Block
+
+        position: int
+            Position of the Test Step Block
+
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+        For more information visit:
+ 
+        https://cloud01-eu.testbench.com/openapi-ui/?url=/doc/api.json#/Specifications/patch_api_tenants__tenantId__products__productId__specifications_testCases__testCaseId__testStepBlocks__testStepBlockId_
+        """
+        test_block_data: Dict[str, Union[str, int]] = {'title': title}
+
+        if position >= 0:
+            test_block_data['position'] = position
+
+        route = f"{self.__product_route(product_id)}/specifications/testCases/{test_case_id}/testStepBlocks/{test_step_block_id}"
+        response = requests.patch(route, json=test_block_data, headers=self.rest_header, verify=self.verify)
+        assert response.status_code == 200, f"Patch Test Step Block failed: {response.text}"
 
     def remove_test_step_block(self, product_id: str, test_case_id: str, test_step_block_id: str) -> None:
         """

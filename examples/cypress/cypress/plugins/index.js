@@ -25,10 +25,10 @@ module.exports = (on, config) => {
   on('task', {
     readFileMaybe(filename) {
       if (fs.existsSync(filename)) {
-        return fs.readFileSync(filename, 'utf8')
+        return fs.readFileSync(filename, 'utf8');
       }
 
-      return null
-    }
-  })
+      return null;
+    },
+  });
 };
