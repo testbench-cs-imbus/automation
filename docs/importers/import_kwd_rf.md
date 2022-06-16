@@ -37,6 +37,7 @@ Import starts.
 | options | explanation |
 | -------| --- |
   -h, --help  |          show this information and exit
+  -x PREFIX, --prefix PREFIX |             prefix added to each Keyword name
   -w WORKSPACE, --workspace WORKSPACE |       your TestBench CS workspace
   -s SERVER, --server SERVER |                        base address for TestBench CS Server
   -u USER, --user USER | user name for accessing TestBench CS

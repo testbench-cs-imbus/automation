@@ -11,7 +11,7 @@ from utils.terminal_utils import ProgressIndicator
 # Parse command line
 parser = argparse.ArgumentParser(description="Import BDT steps via behave.")
 parser.add_argument('source', nargs=1, help='name of feature file (*.feature) or folder to be scanned')
-parser.add_argument('-x', '--praefix', nargs=1, help='praefix added to each Keyword name')
+parser.add_argument('-x', '--prefix', nargs=1, help='prefix added to each Keyword name')
 plist = tbcs_utils.handle_default_args(config.ACCOUNT, parser)
 
 # Configure logging
@@ -20,9 +20,9 @@ logger = logger_utils.get_logger('import BDT Steps', config.LOGLEVEL)
 filename = plist.source[0].replace("\\", "/")
 outFile = config.BEHAVE['base_dir'] + config.BEHAVE['scenario_dir'].replace("\\", "/") + "/out.txt"
 
-praefix = ""
-if plist.praefix != None:  # each Keyword will get this praefix
-    praefix = plist.praefix[0] + "."
+prefix = ""
+if plist.prefix != None:  # each Keyword will get this prefix
+    prefix = plist.prefix[0] + "."
 
 call = ["behave", "-d", "-f", "steps.doc", "-o", outFile]
 call.append(filename)
@@ -82,7 +82,7 @@ for current in lines:
 
             par_kwd = {}
 
-            par_kwd["name"] = praefix + name
+            par_kwd["name"] = prefix + name
             par_kwd["description"] = description[:3998]  # truncate to 3999 chars
             par_kwd["parlist"] = parameter_list
             result = tbcs_utils.get_or_create_kwd(logger, tbcs, pid, par_kwd)

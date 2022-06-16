@@ -14,16 +14,16 @@ logger = logger_utils.get_logger('import Keywords from RF', config.LOGLEVEL)
 # Parse command line
 parser = argparse.ArgumentParser(description="Import Keywords from Robot Framework ressource file or library.")
 parser.add_argument('source', nargs=1, help='name of file or folder to be scanned')
-parser.add_argument('-x', '--praefix', nargs=1, help='praefix added to each Keyword name')
+parser.add_argument('-x', '--prefix', nargs=1, help='prefix added to each Keyword name')
 plist = tbcs_utils.handle_default_args(config.ACCOUNT, parser)
 
 filename = plist.source[0]
 outFile = config.ROBOT_KDT['base_dir'] + \
     config.ROBOT_KDT['script_dir'].replace("\\", "/") + "/out.txt"
 
-praefix = ""
-if plist.praefix != None:  # each Keyword will get this praefix
-    praefix = plist.praefix[0] + "."
+prefix = ""
+if plist.prefix != None:  # each Keyword will get this prefix
+    prefix = plist.prefix[0] + "."
 
 call = ["libdoc", "-f", "json", filename, outFile]
 try:
@@ -68,7 +68,7 @@ for keyword in obj["keywords"]:
 
     par_kwd = {}
 
-    par_kwd["name"] = praefix + name
+    par_kwd["name"] = prefix + name
     par_kwd["description"] = description[:3998]  # truncate to 3999 chars
     par_kwd["parlist"] = keyword["args"]
     result = tbcs_utils.get_or_create_kwd(logger, tbcs, pid, par_kwd)
