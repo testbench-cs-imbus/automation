@@ -96,10 +96,6 @@ for feature in obj:
 
         step_List: dict = tbcs_utils.get_sections(logger, tbcs, pid, test_case_id)
 
-        givenId = step_List['Given']
-        whenId = step_List['When']
-        thenId = step_List['Then']
-
         count_created = count_created + 1
 
         tcJson = {}
@@ -110,11 +106,11 @@ for feature in obj:
         tbcs.patch_test_case(pid, test_case_id, tcJson)
 
         for steps in scenario["steps"]:
-            dest_block = givenId
+            dest_block = step_List['Given']  # ID of section for GIVEN
             if steps["step_type"] == "when":
-                dest_block = whenId
+                dest_block = step_List['When']  # ID of section for WHEN
             if steps["step_type"] == "then":
-                dest_block = thenId
+                dest_block = step_List['Then']  # ID of section for THEN
 
             if use_KDT:
                 parlist = []

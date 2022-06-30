@@ -102,12 +102,28 @@ class Behave:
                         scFile.write("      And ")
 
                     first = False
-                    step['stepOutput'] = step["description"]
 
                     if step["testStepType"] == "TestStep":
                         scFile.write(step["description"] + "\n")
+                        step['stepOutput'] = step["description"]
                     if step["testStepType"] == "Keyword":
-                        scFile.write(step["keyword"]["name"] + "\n")
+                        kwd = self.__tbcs.get_keyword(self.product_id, step['keywordId'])
+
+                        if kwd != None:
+                            kwd_text = kwd['name']
+                            if step['keyword'] != None:  #  DDT
+                                parameters = step['keyword']['parameters']
+                                for par in parameters:
+                                    kwd_text = kwd_text.replace('{' + par['name'] + '}', par['value'])
+                            else:
+                                for par in kwd['parameters']:  # NOT DDT
+                                    value = self.__tbcs.get_keyword_parameters_and_values(
+                                        self.product_id, self.test_case_id, str(step['id']), str(par['id']))
+                                    kwd_text = kwd_text.replace('{' + par['name'] + '}', value)
+
+                            step['stepOutput'] = kwd_text
+
+                        scFile.write(kwd_text + "\n")
 
         scFile.close()
 

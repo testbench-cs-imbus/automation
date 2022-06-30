@@ -39,11 +39,12 @@ def is_matching(item_dict: dict, filter_dict: dict) -> bool:
 def is_equal_parameterized(string_par: str, string_val: str) -> bool:
     """
     Checks if two string are the same if one of them has parameters replaced by values, and the other one has the placeholders.
-
+    For parameters in Gherkin TestCases
+    
     Parameters
     ----------
     string_par : str
-        String with parameters marked like '${parameter}'
+        String with parameters marked like '{parameter}'
     string_val : str
         String which might be the same but has values instead of placeholders
 
@@ -55,7 +56,7 @@ def is_equal_parameterized(string_par: str, string_val: str) -> bool:
     """
     string_par = re.sub('\\.', "\\.",
                         string_par)  # replace single dots which would be read as wildcard with a escaped dot
-    pattern = re.sub('\$\{.*\}', '(.*)', string_par)  # type: ignore
+    pattern = re.sub('\{.*\}', '(.*)', string_par)  # type: ignore
 
     if re.fullmatch(pattern, string_val):
         return True
