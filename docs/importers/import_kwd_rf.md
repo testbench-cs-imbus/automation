@@ -28,7 +28,7 @@ python import_kwd_rf.py source_file
 
 The parameter `source_file` is either the name of an installed RF library, or the filename (possibly including the path) of an RF resource file. For a library, the name - e.g. "Browser" or "BuiltIn" - is sufficient.
 
-The script will list all available products in your workspace and promt to select one. Enter the ID of the product of your choice (leading number)
+The script will list all available products in your workspace and prompt to select one. Enter the ID of the product of your choice (leading number)
 
 Import starts.
 

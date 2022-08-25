@@ -16,6 +16,9 @@ ACCOUNT = {
     "PASSWORD": "<password>",
 }
 
+# The intervall in seconds the agent polls from TestBench CS if it is running in loop mode
+AGENT_LOOP_INTERVAL_SEC = 3
+
 # Prefix for naming of Test Sessions where the test results are collected
 TEST_SESSION_PREFIX = ""  # Format of an created Test Session name: <Test Session prefix>-<Test Suite name>-<timestamp>
 
@@ -84,6 +87,24 @@ BEHAVE = {
     "cleanup": False,
 }
 
+# Carla adapter (simulator)
+CARLA = {
+    "sc_runner": "<location of the scenario runner>",
+    "host": "<Carla hostname if running remote>",
+    "base_dir": "<base dir for Carla>",
+    "result_dir": "<result dir>",
+    "cleanup": False,
+}
+
+# CarMaker adapter (simulator)
+CARMAKER = {
+    "testrun_name": "Name of Test Run",
+    "host": "<CarMaker hostname if running remote>",
+    "base_dir": "<base dir for CarMaker>",
+    "result_dir": "<result dir>",
+    "cleanup": False,
+}
+
 # Cypress adapter
 CYPRESS = {
     "base_dir": "./examples/cypress",  # location of the Cypres project
@@ -91,6 +112,18 @@ CYPRESS = {
     "cypress_bin": "./node_modules/.bin/cypress",  # Cypress binary
     "cypress_spec_folder": "./tests",  # search folder for test specification files
     "cleanup": False,
+}
+
+# ==========
+# Import specific config:
+TEST_CASE_TYPE = "SimpleTestCase"
+FILE_EXTENSION = "xosc"
+IMPORTED_CUSTOM_FIELDS = {
+    "Author",
+    "Date",
+    "Revision",
+    "Scenario Name",
+    "Test Tool",
 }
 
 TEST_STEP_TYPE = "Keyword"  # Keyword or TextStep

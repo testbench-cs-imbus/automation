@@ -110,7 +110,9 @@ def execute_test_case(tbcs, product_id, test_case_execution):
 
     # Check if Test Case should run parallel
     parallel = comparison_utils.stringToBoolean(
-        tbcs_utils.get_custom_field(logger, tbcs, concrete_test_case, "Parallel"))
+        tbcs_utils.get_custom_field(
+            logger, tbcs, concrete_test_case,
+            "Parallel"))
     if parallel == '':
         # custom field 'Parallel' not defined in TestBench CS => config file
         logger.info(f"Custom Field for 'Parallel' not set. Trying default from configuration: '{config.PARALLEL}'")
@@ -206,7 +208,9 @@ def execute_test_session(tbcs, product_id, test_session_id):
     # execute all Test Cases in test_case_list and update Test Session status
 
     logger.info(f"Starting Test Session with id: {test_session_id}")
-    test_session = tbcs.get_session(product_id, test_session_id)
+    test_session = tbcs.get_session(
+        product_id,
+        test_session_id)
     tbcs.patch_session(product_id, test_session_id, {'status': 'InProgress'})
     tbcs.join_session(product_id, str(test_session_id))
 
@@ -341,7 +345,7 @@ if __name__ == "__main__":
                     # Execute session
                     execute_test_session(tbcs, product_id, test_session_id)
 
-            sleep(3)
+            sleep(config.AGENT_LOOP_INTERVAL_SEC)
 
             if plist.loop == False:
                 exit(0)
