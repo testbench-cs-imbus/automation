@@ -8,7 +8,6 @@ import config
 
 import utils.comparison_utils as comparison_utils
 from utils.tbcs_api import TbcsApi
-from utils.terminal_utils import input
 
 
 def connect_itb(logger: Logger, account: dict) -> TbcsApi:
@@ -103,6 +102,8 @@ def ask_for_product(logger: Logger, tbcs: TbcsApi) -> str:
     - product_id => Id of the selected product
     - "" => If no valid product was selected
     """
+    from utils.terminal_utils import input
+
     product_id = ""
     product_ids = get_products(logger, tbcs,
                                config.PRODUCT_FILTER)  # only products existing during TA-Agent startup are captured
@@ -399,11 +400,22 @@ def get_or_create_CF(logger: Logger,
     return cfLookup
 
 
+def par_in_List(par: dict, par_list: [dict]) -> bool:
+    result = False
+    for list_par in par_list:
+        if list_par['name'] == par['name']:
+            result = True
+            break
+
+    return result
+
+
 def get_or_create_kwd(logger: Logger,
                       tbcs: TbcsApi,
                       product_id: str,
                       new_keyword: dict,
-                      signature_check: bool = False) -> dict:
+                      signature_check: bool = False,
+                      update_level: int = 0) -> dict:
     """
     Checks if a keyword exists, otherwise it will be created.
     'exists' can mean:
@@ -426,8 +438,14 @@ def get_or_create_kwd(logger: Logger,
         Dictionary of the new keyword
 
     signature_check: boolean
-        Checks the signature of a keyword
+        Checks the signature of a keyword.
+        By default, set to "False"
 
+    update_level: int
+        defines if existing Keywords shall be updated
+        0: no updates (default)
+        1: update name or description
+        2: update parameter list
 
     Returns
     -------
@@ -465,24 +483,61 @@ def get_or_create_kwd(logger: Logger,
             if comparison_utils.is_equal_parameterized(keyword['name'], name):
                 logger.debug(f"name equal ignoring pars: {keyword['name']} - {name}")
 
-            # check for identical signature:
-            found = 0
-            for parNew in new_keyword['parlist']:
-                for parOld in keyword['parameters']:
-                    if parNew['name'] == parOld['name']:
-                        found = found + 1
-                        # print("match: " + parNew['name'])
-                        break
-                    # else:
-                    # print("mismatch: " + parNew['name'] + " <-> " + parOld['name'])
+            updated = 0
+            if update_level > 0 and (description != keyword['description'] or name != keyword['name']):
+                print("Updating name/description")
+                updated = 1
+                variables = {}
+                if description != "":
+                    variables['description'] = description
+                variables['name'] = name
+                tbcs.update_keyword(product_id, keyword['id'], variables)
 
-            if found == len(new_keyword['parlist']) or signature_check == False:
+            # check for identical signature:
+            mismatch = 0
+            # step1: all parameters of new Keyword in old Keyword?
+            for parNew in new_keyword['parlist']:
+                if not par_in_List(parNew, keyword['parameters']):
+                    if update_level > 1:
+                        logger.debug(f'Parameter not found in old: {parNew["name"]} - creating!')
+                        variables = {}
+                        variables['paramName'] = parNew["name"]
+                        if 'description' in parNew.keys():
+                            variables['paramDescription'] = parNew['description']
+                        par_id = tbcs.create_keyword_param(product_id, keyword['id'], variables)
+                        par_list.append({
+                            'id': par_id,
+                            'name': parNew['name'],
+                            'description': variables['paramDescription']
+                        })
+                        updated = updated + 1
+                    else:
+                        logger.debug(f'Parameter not found in old: {parNew["name"]}')
+                        mismatch = mismatch + 1
+
+            # step2: all parameters of old Keyword still in new Keyword?
+            for parOld in keyword['parameters']:
+                if not par_in_List(parOld, new_keyword['parlist']):
+                    if update_level > 1:
+                        logger.debug(f'Parameter not found in new: {parOld["name"]} - deleting!')
+                        tbcs.delete_keyword_param(product_id, parOld["id"])
+                        keyword['parameters'].remove(parOld)
+                        updated = updated + 1
+                    else:
+                        logger.debug(f'Parameter not found in new: {parOld["name"]}')
+                        mismatch = mismatch + 1
+
+            if mismatch == 0 or signature_check == False:
                 for parameter in keyword['parameters']:
                     par_list.append(parameter)
+
                 logger.debug(f"Found existing Keyword {keyword['name']} with id: {keyword['id']}")
-                return {'id': keyword['id'], 'par_list': par_list, 'action': 'reused'}
+                if updated > 0:
+                    return {'id': keyword['id'], 'par_list': par_list, 'action': 'updated'}
+                else:
+                    return {'id': keyword['id'], 'par_list': par_list, 'action': 'reused'}
             else:
-                return {}
+                return {'action': 'none (signature mismatch)'}
 
     keyword_id = tbcs.create_keyword(product_id, variables)
     logger.debug(f"Successfully created Keyword with id: {keyword_id}")
@@ -493,9 +548,11 @@ def get_or_create_kwd(logger: Logger,
 
             variables = {}
             variables['paramName'] = arg['name']
-
+            if 'description' in arg.keys():
+                variables['paramDescription'] = arg['description']
             par_id = tbcs.create_keyword_param(product_id, keyword_id, variables)
-            par_list.append({'id': par_id, 'name': arg['name'], 'description': ""})
+            if 'paramDescription' in variables:
+                par_list.append({'id': par_id, 'name': arg['name'], 'description': variables['paramDescription']})
             # logger.debug(f"Successfully created Parameter with id: {par_id}")
 
     return {'id': keyword_id, 'par_list': par_list, 'action': 'created'}
@@ -563,6 +620,8 @@ def handle_default_args(account: dict, parser: argparse.ArgumentParser) -> argpa
     Namespace
         Parser set containing values of parsed arguments
     """
+    from utils.terminal_utils import input
+
     parameter_set = {}
 
     parser.add_argument('-w', '--workspace', nargs=1, help='your TestBench CS workspace')

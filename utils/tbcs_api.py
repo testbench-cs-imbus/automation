@@ -1891,6 +1891,56 @@ class TbcsApi:
         assert response.status_code == 200, f"MUTATION update keyword failed: {response.text}"
         return str(response.json()['data']['updateKeyword']['_id'])
 
+    def update_keyword_parameter(self, product_id: str, param_id: str, variables: Dict[str, str]) -> str:
+        """
+        Updates a keyword parameter.
+        
+        Parameters
+        ----------
+        product_id: str
+            Id of the product
+
+        param_id: str
+            Id of the parameter that shall be updated
+
+        variables: dict
+            Dictionary with content that should be updated
+            - "name"          (optional)
+            - "description"   (optional)
+
+        Returns
+        -------
+        str
+            Id of the updated keyword parameter
+        
+        Notes
+        -----
+        For more information visit:
+ 
+        https://cloud01-eu.testbench.com/api/kdt/
+        """
+        mutation = """
+        mutation""" + self.__gql_signature(variables) + """
+        {
+            updateKeywordParameter( ids: {
+                tenantId: """ + self.tenant_id + """,
+                productId: """ + product_id + """,
+                paramId: \"""" + param_id + """\",
+             },
+            keywordParamForUpdate: """ + self.__gql_definition(variables) + """)
+            {
+                _id
+            }
+        }
+        """
+
+        query: Dict[str, Union[str, Dict[str, str]]] = {'query': mutation}
+        query['variables'] = variables
+
+        response = requests.post(f"{self.tbcs_base}/api/kdt/", json=query, headers=self.rest_header, verify=self.verify)
+        assert response.status_code == 200, f"MUTATION update keyword parameter failed: {response.text}"
+        return str(response.json()['data']['updateKeywordParameter']['_id'])
+
     def create_keyword_param(self, product_id: str, keyword_id: str, variables: Dict[str, str]) -> str:
         """
         Creates a keyword parameter.
@@ -1936,10 +1986,55 @@ class TbcsApi:
 
         query: Dict[str, Union[str, Dict[str, str]]] = {'query': mutation}
         query['variables'] = variables
-
         response = requests.post(f"{self.tbcs_base}/api/kdt/", json=query, headers=self.rest_header, verify=self.verify)
         assert response.status_code == 200, f"MUTATION create keyword parameter failed: {response.text}"
         return str(response.json()['data']['createKeywordParam']['id'])
+
+    def delete_keyword_param(self, product_id: str, parameter_id: str) -> str:
+        """
+        Deletes a keyword parameter.
+        
+        Parameters
+        ----------
+        product_id: str
+            Id of the product
+
+        parameter_id: str
+            Id of the parameter
+        
+        Returns
+        -------
+        str
+            Id of the deleted parameter
+
+        Notes
+        -----
+        For more information visit:
+ 
+        https://cloud01-eu.testbench.com/api/kdt/
+        """
+        mutation = """
+        mutation
+        {
+            deleteKeywordParameter( 
+                ids: {
+                    tenantId: """ + self.tenant_id + """,
+                    productId: """ + product_id + """,
+                    paramId: \"""" + parameter_id + """\"
+                }
+            )
+            {
+                _id
+            }
+        }
+        """
+
+        response = requests.post(f"{self.tbcs_base}/api/kdt/",
+                                 json={'query': mutation},
+                                 headers=self.rest_header,
+                                 verify=self.verify)
+        assert response.status_code == 200, f"MUTATION delete keyword parameter failed: {response.text}"
+        return response.json()['data']['deleteKeywordParameter']
 
     def get_keyword_list(self, product_id: str) -> dict:
         """

@@ -13,8 +13,10 @@ import config
 import utils.comparison_utils as comparison_utils
 import utils.logger_utils as logger_utils
 
+from adapters.AdapterTemplate import AdapterTemplate
 
-class RFKdt:
+
+class RFKdt(AdapterTemplate):
 
     product_id: str
     test_case_id: str
@@ -39,6 +41,9 @@ class RFKdt:
         # Save folder paths
         self.__script_dir = str(Path(config.ROBOT_KDT['base_dir'] + config.ROBOT_KDT['script_dir']).absolute()).replace(
             "\\", "/")
+        # Make sure that a path or similar in a TC name does not cause trouble later when writing files based on TC name
+        self.__test_case_name = "".join(x if (x.isalnum() or x in "._- ") else "_" for x in self.__test_case_name)
+
         self.__result_dir = str(
             Path(config.ROBOT_KDT['base_dir'] + config.ROBOT_KDT['result_dir'] + "/" +
                  self.__test_case_name).absolute()).replace("\\", "/")

@@ -10,8 +10,10 @@ from shutil import rmtree
 import config
 import utils.logger_utils as logger_utils
 
+from adapters.AdapterTemplate import AdapterTemplate
 
-class RobotFramework:
+
+class RobotFramework(AdapterTemplate):
     product_id: str
     test_case_id: str
     execution_id: str

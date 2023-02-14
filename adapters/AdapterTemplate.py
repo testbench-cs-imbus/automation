@@ -3,6 +3,7 @@
 #
 
 import subprocess
+from abc import ABC, abstractmethod
 from tempfile import TemporaryDirectory
 from typing import List, Union
 
@@ -11,7 +12,7 @@ import utils.logger_utils as logger_utils
 from utils.tbcs_api import TbcsApi
 
 
-class AdapterTemplate:
+class AdapterTemplate(ABC):
 
     # public variables needed by agent
     product_id: str
@@ -19,6 +20,7 @@ class AdapterTemplate:
     execution_id: str
 
     # Default constructor for adapter initialization
+    @abstractmethod
     def __init__(self, tbcs: TbcsApi, concrete_test_case: dict, abstract_test_case: dict, execution_id: str,
                  temp_dir: TemporaryDirectory):
         """
@@ -66,6 +68,7 @@ class AdapterTemplate:
         #
         self.__logger.info("Adapter initialized")
 
+    @abstractmethod
     def execute_test_case(self, parallel: bool,
                           ddt_row: List[dict]) -> Union[subprocess.Popen, subprocess.CompletedProcess, None]:
         """
@@ -115,6 +118,7 @@ class AdapterTemplate:
                 f"Subprocess Exception occured for Test Case '{str(self.__test_case_name)}'!\n\t{e.__str__()}")
             return None
 
+    @abstractmethod
     def check_result(self, executed_cmd: dict) -> str:
         """
         This method checks the result of the executed command.
@@ -142,6 +146,7 @@ class AdapterTemplate:
 
         return "Failed"
 
+    @abstractmethod
     def final_cleanup(self) -> None:
         """
         This method is called after tests have been executed and does some adapter specific cleanup.

@@ -2,6 +2,7 @@
 import argparse
 import importlib
 import json
+from ssl import SSLError
 import traceback
 from datetime import datetime
 from pathlib import Path
@@ -110,9 +111,7 @@ def execute_test_case(tbcs, product_id, test_case_execution):
 
     # Check if Test Case should run parallel
     parallel = comparison_utils.stringToBoolean(
-        tbcs_utils.get_custom_field(
-            logger, tbcs, concrete_test_case,
-            "Parallel"))
+        tbcs_utils.get_custom_field(logger, tbcs, concrete_test_case, "Parallel"))
     if parallel == '':
         # custom field 'Parallel' not defined in TestBench CS => config file
         logger.info(f"Custom Field for 'Parallel' not set. Trying default from configuration: '{config.PARALLEL}'")
@@ -275,80 +274,88 @@ if __name__ == "__main__":
 
         # Main loop: poll workspace for Test Sessions ready to run and then execute their Test Cases
         while True:
-            # Process each product which is configured to be monitored
-            for product_id in product_ids:
-                # Process each Test Suite in product which is configured to be monitored
-                test_suite_ids = tbcs_utils.get_test_suites(logger, tbcs, product_id, config.TEST_SUITE_FILTER)
+            try:
+                # Process each product which is configured to be monitored
+                for product_id in product_ids:
+                    # Process each Test Suite in product which is configured to be monitored
+                    test_suite_ids = tbcs_utils.get_test_suites(logger, tbcs, product_id, config.TEST_SUITE_FILTER)
 
-                # From each Test Suite: get the Test Cases and their ids
-                for test_suite_id in test_suite_ids:
-                    test_suite = tbcs.get_suite(product_id, test_suite_id)
+                    # From each Test Suite: get the Test Cases and their ids
+                    for test_suite_id in test_suite_ids:
+                        test_suite = tbcs.get_suite(product_id, test_suite_id)
 
-                    # Check if user is responsible for the Test Suite
-                    if not int(tbcs.user_id) in test_suite['responsibles']:
-                        logger.warning(
-                            f"User '{config.ACCOUNT['LOGIN']}' is not a 'Responsible User' for the Test Suite '{test_suite['name']}'. Skipping ..."
-                        )
-                        continue
+                        # Check if user is responsible for the Test Suite
+                        if not int(tbcs.user_id) in test_suite['responsibles']:
+                            logger.warning(
+                                f"User '{config.ACCOUNT['LOGIN']}' is not a 'Responsible User' for the Test Suite '{test_suite['name']}'. Skipping ..."
+                            )
+                            continue
 
-                    # Create Session
-                    logger.info(f"Creating Test Session for Test Suite '{test_suite['name']}' ...")
-                    test_session_id = tbcs_utils.create_test_session(logger, tbcs, product_id, test_suite['name'])
+                        # Create Session
+                        logger.info(f"Creating Test Session for Test Suite '{test_suite['name']}' ...")
+                        test_session_id = tbcs_utils.create_test_session(logger, tbcs, product_id, test_suite['name'])
 
-                    test_case_ids = []
-                    for test_case in test_suite['testCases']:
-                        if comparison_utils.is_matching(test_case, config.TEST_CASE_FILTER):
-                            test_case_ids.append(test_case['testCaseIds'])
+                        test_case_ids = []
+                        for test_case in test_suite['testCases']:
+                            if comparison_utils.is_matching(test_case, config.TEST_CASE_FILTER):
+                                test_case_ids.append(test_case['testCaseIds'])
 
-                    # Create an execution for every Test Case and append it to the Test Session
-                    for test_case_id in test_case_ids:
-                        if test_case_id['ddtTableIds']:
-                            table_id = test_case_id['ddtTableIds']['tableId']
-                            row_id = test_case_id['ddtTableIds']['rowId']
-                            execution_id = tbcs.post_execution_ddt(product_id, test_case_id['testCaseId'], table_id,
-                                                                   row_id)
-                        else:
-                            execution_id = tbcs.post_execution(product_id, test_case_id['testCaseId'])
+                        # Create an execution for every Test Case and append it to the Test Session
+                        for test_case_id in test_case_ids:
+                            if test_case_id['ddtTableIds']:
+                                table_id = test_case_id['ddtTableIds']['tableId']
+                                row_id = test_case_id['ddtTableIds']['rowId']
+                                execution_id = tbcs.post_execution_ddt(product_id, test_case_id['testCaseId'], table_id,
+                                                                       row_id)
+                            else:
+                                execution_id = tbcs.post_execution(product_id, test_case_id['testCaseId'])
 
-                        tbcs.add_execution_to_session(product_id, test_session_id, test_case_id['testCaseId'],
-                                                      execution_id)
+                            tbcs.add_execution_to_session(product_id, test_session_id, test_case_id['testCaseId'],
+                                                          execution_id)
 
-                    tbcs.patch_session(product_id, test_session_id, {'status': 'Ready'})
-                    logger.info(f"Created Test Session with id: {test_session_id}")
+                        tbcs.patch_session(product_id, test_session_id, {'status': 'Ready'})
+                        logger.info(f"Created Test Session with id: {test_session_id}")
 
-                    # Execute session
-                    execute_test_session(tbcs, product_id, test_session_id)
+                        # Execute session
+                        execute_test_session(tbcs, product_id, test_session_id)
 
-                    tbcs.patch_suite(product_id, str(test_suite['testSuiteId']), {'status': 'Completed'})
+                        tbcs.patch_suite(product_id, str(test_suite['testSuiteId']), {'status': 'Completed'})
 
-                # Process each Test Session in product which is configured to be monitored
-                test_session_ids = tbcs_utils.get_test_sessions(logger, tbcs, product_id, config.TEST_SESSION_FILTER)
+                    # Process each Test Session in product which is configured to be monitored
+                    test_session_ids = tbcs_utils.get_test_sessions(logger, tbcs, product_id,
+                                                                    config.TEST_SESSION_FILTER)
 
-                for test_session_id in test_session_ids:
-                    test_session = tbcs.get_session(product_id, test_session_id)
-                    logger.debug("Check Test Session: " + str(test_session['testSessionId']) + " " +
-                                 test_session['name'])
+                    for test_session_id in test_session_ids:
+                        test_session = tbcs.get_session(product_id, test_session_id)
+                        logger.debug("Check Test Session: " + str(test_session['testSessionId']) + " " +
+                                     test_session['name'])
 
-                    # Check if user is responsible for the Test Session
-                    is_participant = False
-                    for participant in test_session['participants']:
-                        if str(participant['userId']) == tbcs.user_id:
-                            is_participant = True
-                            break
+                        # Check if user is responsible for the Test Session
+                        is_participant = False
+                        for participant in test_session['participants']:
+                            if str(participant['userId']) == tbcs.user_id:
+                                is_participant = True
+                                break
 
-                    if not is_participant:
-                        logger.warning(
-                            f"User '{config.ACCOUNT['LOGIN']}' is not a 'Participating User' in the Test Session '{test_session['name']}'. Skipping ..."
-                        )
-                        continue
+                        if not is_participant:
+                            logger.warning(
+                                f"User '{config.ACCOUNT['LOGIN']}' is not a 'Participating User' in the Test Session '{test_session['name']}'. Skipping ..."
+                            )
+                            continue
 
-                    # Execute session
-                    execute_test_session(tbcs, product_id, test_session_id)
+                        # Execute session
+                        execute_test_session(tbcs, product_id, test_session_id)
 
-            sleep(config.AGENT_LOOP_INTERVAL_SEC)
+                sleep(config.AGENT_LOOP_INTERVAL_SEC)
 
-            if plist.loop == False:
-                exit(0)
+                if plist.loop == False:
+                    exit(0)
+
+            except SSLError as ce:
+                logger.error(f"SSL connection exception occured:\n\t{ce.__str__()}")
+                traceback.print_exc()
+                print("==============")
+
     except Exception as e:
         logger.error(f"Exception occured:\n\t{e.__str__()}")
         traceback.print_exc()

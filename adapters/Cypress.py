@@ -13,8 +13,10 @@ from pathlib import Path
 import config
 import utils.logger_utils as logger_utils
 
+from adapters.AdapterTemplate import AdapterTemplate
 
-class Cypress:
+
+class Cypress(AdapterTemplate):
     # public variables needed by agent
     product_id: str
     test_case_id: str

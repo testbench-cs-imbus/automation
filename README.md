@@ -186,7 +186,7 @@ So far some adapters for Test Tools are described under [Adapters](./docs/adapte
 
 ### **Structure and parameters**
 
-All Adapters must follow the same basic structure, otherwise they will not work properly. An Adapter template can be found inside the "`adapters`"-folder. Please use it if you want to [create your own Adapter](#creating-your-own-adapter).
+All Adapters must follow the same basic structure, otherwise they will not work properly. Therefore a new created adapter must inherit the "`AdapterTemplate`" class found in the "`AdapterTemplate.py`" file. This class also functions as a template with some additional information about the methods of an Adapter. Please use it if you want to [create your own Adapter](#creating-your-own-adapter).
 
 The Adapter has to contain a class with the same name as the filename. If for example the Adapter-filename is "`adapterTemplate.py`", the classname has to be "`adapterTemplate`".
 
@@ -202,7 +202,7 @@ The Adapter also needs the following three functions:
 
 Creating your own Adapter is easy.
 
-If you want to create your own Adapter, please consult the [Structure and Parameters](#structure-and-parameters) section. It shows you what an Adapter needs to work properly. If you are done with your Adapter, put the file into the folder "`adapters`". The agent automatically finds the Adapter by the name of the custom field or by your configuration variable [Default Adapter](#default-adapter).
+If you want to create your own Adapter, please consult the [Structure and Parameters](#structure-and-parameters) section. It shows you what an Adapter needs to work properly. If you inherited the "`AdapterTemplate`" class and filled all required functions with your needs, put the file into the folder "`adapters`". The agent automatically finds the Adapter by the name of the custom field or by your configuration variable [Default Adapter](#default-adapter).
 
 ---
 

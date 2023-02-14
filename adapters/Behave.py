@@ -13,8 +13,10 @@ import utils.comparison_utils as comparison_utils
 import utils.logger_utils as logger_utils
 from utils.tbcs_api import TbcsApi
 
+from adapters.AdapterTemplate import AdapterTemplate
 
-class Behave:
+
+class Behave(AdapterTemplate):
 
     product_id: str
     test_case_id: str
